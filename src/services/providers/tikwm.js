@@ -93,7 +93,7 @@ class TikwmProvider extends BaseProvider {
       thumbnail: d.cover     || '',
       duration:  this._formatDuration(d.duration),
       downloads: {
-        nowm:  d.play   || '',
+        nowm:  d.hdplay || d.play || '',
         wm:    d.wmplay || '',
         mp3:   d.music  || '',
         cover: d.cover  || '',
