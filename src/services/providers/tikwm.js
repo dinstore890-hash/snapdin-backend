@@ -92,6 +92,7 @@ class TikwmProvider extends BaseProvider {
       author:    `@${d.author?.unique_id || d.author?.nickname || 'unknown'}`,
       thumbnail: d.cover     || '',
       duration:  this._formatDuration(d.duration),
+      videoUrl:  `https://www.tiktok.com/@${d.author?.unique_id || 'user'}/video/${d.id}`,
       downloads: {
         nowm:  d.hdplay || d.play || '',
         wm:    d.wmplay || '',
