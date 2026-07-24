@@ -95,10 +95,11 @@ class TikwmProvider extends BaseProvider {
       videoUrl:  `https://www.tiktok.com/@${d.author?.unique_id || 'user'}/video/${d.id}`,
       downloads: {
         nowm:  d.hdplay || d.play || '',
-        wm:    d.wmplay || '',
+        wm:    d.wmplay || d.play || '',
         mp3:   d.music  || '',
-        cover: d.cover  || '',
+        cover: d.origin_cover || d.cover || '',
       },
+      isHd: !!(d.hdplay),
     };
   }
 
