@@ -28,9 +28,11 @@ const downloadFile = async (req, res, next) => {
       responseType: 'stream',
       timeout: 30000,
       headers: {
-        // Mimic a browser request so CDN doesn't reject it
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36',
         'Referer': 'https://www.tiktok.com/',
+        'Accept': 'video/mp4,video/*;q=0.9,*/*;q=0.8',
+        'Accept-Encoding': 'identity',
+        'Range': 'bytes=0-',
       },
       maxRedirects: 5,
     });
