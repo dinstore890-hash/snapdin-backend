@@ -17,7 +17,7 @@ const app = express();
 app.set('trust proxy', 1);
 
 // ── Security & utility middleware ─────────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(compression());
