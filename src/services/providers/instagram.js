@@ -42,14 +42,20 @@ class InstagramProvider extends BaseProvider {
   _normalise(d, originalUrl) {
     const content = d.data?.content || {};
     const items   = content.items || [];
+    const mediaType = d.media_type || '';
 
-    const mediaUrl = content.media_url || items.find(i => i.type === 'video')?.media_url || items[0]?.media_url || '';
-    const thumb    = content.thumbnail_url || d.data?.cover_thumbnail || items[0]?.thumbnail_url || '';
+    // Carousel (sidecar): collect all items as images
+    const isCarousel = mediaType === 'sidecar' || items.length > 0;
+    const images = isCarousel && items.length > 0
+      ? items.map(i => i.media_url).filter(Boolean)
+      : null;
+
+    // Single photo: no items, media_url is an image
+    const isSinglePhoto = !isCarousel && (mediaType === 'photo' || (!mediaType && content.media_url && !content.media_url.includes('.mp4')));
+
+    const mediaUrl = content.media_url || '';
+    const thumb    = content.thumbnail_url || images?.[0] || '';
     const title    = d.data?.title || 'Instagram Post';
-
-    // Carousel: collect all image items
-    const imageItems = items.filter(i => i.type === 'image' || (!i.type && i.media_url && !mediaUrl));
-    const images = imageItems.length > 0 ? imageItems.map(i => i.media_url) : null;
 
     return {
       title,
@@ -58,10 +64,10 @@ class InstagramProvider extends BaseProvider {
       duration:  '00:00',
       videoUrl:  originalUrl,
       isHd:      true,
-      images,
+      images:    images || (isSinglePhoto && mediaUrl ? [mediaUrl] : null),
       downloads: {
-        nowm:  images ? '' : mediaUrl,
-        wm:    images ? '' : mediaUrl,
+        nowm:  (!images && !isSinglePhoto) ? mediaUrl : '',
+        wm:    (!images && !isSinglePhoto) ? mediaUrl : '',
         mp3:   '',
         cover: thumb,
       },
