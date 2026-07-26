@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { fetchTikTokData } = require('../services/tiktokService');
+const { fetchInstagramData } = require('../services/instagramService');
 const { successResponse, errorResponse } = require('../utils/response');
 
 // POST /api/download — fetch video metadata
@@ -56,4 +57,14 @@ const downloadFile = async (req, res, next) => {
   }
 };
 
-module.exports = { download, downloadFile };
+// POST /api/instagram — fetch Instagram video metadata
+const downloadInstagram = async (req, res, next) => {
+  try {
+    const data = await fetchInstagramData(req.body.url);
+    successResponse(res, { data });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { download, downloadFile, downloadInstagram };

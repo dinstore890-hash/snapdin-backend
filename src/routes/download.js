@@ -1,10 +1,11 @@
 const { Router } = require('express');
-const { download, downloadFile } = require('../controllers/downloadController');
+const { download, downloadFile, downloadInstagram } = require('../controllers/downloadController');
 const validateUrl = require('../middleware/validateUrl');
 
 const router = Router();
 
-router.post('/download',      validateUrl, download);      // fetch metadata
-router.get('/download-file',              downloadFile);   // proxy & stream file
+router.post('/download',           validateUrl, download);           // TikTok metadata
+router.post('/instagram',                       downloadInstagram);  // Instagram metadata
+router.get('/download-file',                    downloadFile);       // proxy & stream file
 
 module.exports = router;
