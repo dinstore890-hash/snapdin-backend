@@ -7,41 +7,45 @@ class InstagramProvider extends BaseProvider {
     this.client = axios.create({
       timeout: 15000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36',
+        'Content-Type': 'application/json',
+        'x-rapidapi-host': 'instagram-reels-downloader-api.p.rapidapi.com',
       },
     });
   }
 
   async getVideo(url) {
-    // Use RapidAPI Instagram downloader
-    const response = await this.client.get('https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index', {
-      params: { url },
-      headers: {
-        'x-rapidapi-host': 'instagram-downloader-download-instagram-videos-stories.p.rapidapi.com',
-        'x-rapidapi-key': process.env.RAPIDAPI_KEY,
-      },
-    });
+    const response = await this.client.get(
+      'https://instagram-reels-downloader-api.p.rapidapi.com/download',
+      {
+        params: { url },
+        headers: { 'x-rapidapi-key': process.env.RAPIDAPI_KEY },
+      }
+    );
 
     const data = response.data;
-    if (!data || !data.media) throw new Error('Could not fetch Instagram video.');
+    if (!data) throw new Error('Could not fetch Instagram video.');
 
-    return this._normalise(data);
+    return this._normalise(data, url);
   }
 
-  _normalise(d) {
-    const media = Array.isArray(d.media) ? d.media[0] : d.media;
+  _normalise(d, originalUrl) {
+    // API returns { url: [...] } or { url: 'string' }
+    const urls = Array.isArray(d.url) ? d.url : [d.url];
+    const videoUrl = urls.find(u => u && u.includes('.mp4')) || urls[0] || '';
+    const thumb    = d.thumbnail || d.thumb || '';
+
     return {
       title:     d.title || 'Instagram Video',
       author:    d.author || '@instagram',
-      thumbnail: d.thumbnail || '',
+      thumbnail: thumb,
       duration:  '00:00',
-      videoUrl:  d.url || '',
+      videoUrl:  originalUrl,
       isHd:      true,
       downloads: {
-        nowm:  media || '',
-        wm:    media || '',
+        nowm:  videoUrl,
+        wm:    videoUrl,
         mp3:   '',
-        cover: d.thumbnail || '',
+        cover: thumb,
       },
     };
   }
