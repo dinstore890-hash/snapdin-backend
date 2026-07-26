@@ -93,4 +93,32 @@ const proxyImage = async (req, res, next) => {
   }
 };
 
-module.exports = { download, downloadFile, downloadInstagram, proxyImage };
+// GET /api/proxy-video?url=... — proxy CDN video for inline playback (no Content-Disposition)
+const proxyVideo = async (req, res, next) => {
+  try {
+    const { url } = req.query;
+    if (!url) return errorResponse(res, 'Missing url parameter.', 400);
+
+    const upstream = await axios.get(url, {
+      responseType: 'stream',
+      timeout: 30000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36',
+        'Referer': 'https://www.instagram.com/',
+        'Accept': 'video/mp4,video/*;q=0.9,*/*;q=0.8',
+        'Accept-Encoding': 'identity',
+      },
+      maxRedirects: 5,
+    });
+
+    res.setHeader('Content-Type', upstream.headers['content-type'] || 'video/mp4');
+    if (upstream.headers['content-length']) res.setHeader('Content-Length', upstream.headers['content-length']);
+    res.setHeader('Accept-Ranges', 'bytes');
+    upstream.data.pipe(res);
+    upstream.data.on('error', (err) => next(err));
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { download, downloadFile, downloadInstagram, proxyImage, proxyVideo };
