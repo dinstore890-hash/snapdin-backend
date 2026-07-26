@@ -6,10 +6,6 @@ class InstagramProvider extends BaseProvider {
     super();
     this.client = axios.create({
       timeout: 15000,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-rapidapi-host': 'instagram-downloader-download-instagram-videos-stories.p.rapidapi.com',
-      },
     });
   }
 
@@ -19,23 +15,19 @@ class InstagramProvider extends BaseProvider {
     for (let i = 0; i < maxRetries; i++) {
       try {
         const response = await this.client.get(
-          'https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/unified/url',
+          'https://instagram-scraper-api2.p.rapidapi.com/v1/post_info',
           {
-            params: { url },
+            params: { code_or_id_or_url: url },
             headers: {
-              'x-rapidapi-host': 'instagram-downloader-download-instagram-videos-stories.p.rapidapi.com',
+              'x-rapidapi-host': 'instagram-scraper-api2.p.rapidapi.com',
               'x-rapidapi-key': process.env.RAPIDAPI_KEY,
             },
           }
         );
         const data = response.data;
-        console.log('Instagram API response:', JSON.stringify(data).slice(0, 2000));
-        if (!data || !data.success) throw new Error('Could not fetch Instagram video.');
-        const content = data.data?.content || {};
-        const items = content.items || [];
-        console.log('Instagram items count:', items.length);
-        if (items.length > 0) console.log('Instagram items[0]:', JSON.stringify(items[0]).slice(0, 300));
-        const result = this._normalise(data, url);
+        console.log('Instagram API response:', JSON.stringify(data).slice(0, 1000));
+        if (!data || !data.data) throw new Error('Could not fetch Instagram post.');
+        const result = this._normalise(data);
         console.log('Instagram normalised:', JSON.stringify(result).slice(0, 300));
         return result;
       } catch (err) {
@@ -52,36 +44,43 @@ class InstagramProvider extends BaseProvider {
     throw lastError;
   }
 
-  _normalise(d, originalUrl) {
-    const content = d.data?.content || {};
-    const items   = content.items || [];
-    const mediaType = d.media_type || '';
+  _normalise(d) {
+    const item = d.data;
+    const mediaType = item.media_type; // 1=photo, 2=video, 8=carousel
+    const originalUrl = item.code ? `https://www.instagram.com/p/${item.code}/` : '';
 
-    // Carousel (sidecar): collect all items as images
-    const isCarousel = mediaType === 'sidecar' || items.length > 0;
-    const images = isCarousel && items.length > 0
-      ? items.map(i => i.media_url).filter(Boolean)
-      : null;
+    let images = null;
+    let mediaUrl = '';
+    let thumb = item.thumbnail_url || item.display_url || '';
 
-    // Single photo: no items, media_url is an image
-    const isSinglePhoto = !isCarousel && (mediaType === 'photo' || (!mediaType && content.media_url && !content.media_url.includes('.mp4')));
+    if (mediaType === 8) {
+      // Carousel
+      images = (item.carousel_media || []).map(m => m.display_url || m.thumbnail_url || '').filter(Boolean);
+    } else if (mediaType === 2) {
+      // Video
+      const versions = item.video_versions || [];
+      mediaUrl = versions[0]?.url || '';
+      thumb = item.thumbnail_url || item.display_url || '';
+    } else {
+      // Single photo
+      images = [item.display_url || item.thumbnail_url || ''].filter(Boolean);
+    }
 
-    const mediaUrl = content.media_url || '';
-    const thumb    = content.thumbnail_url || images?.[0] || '';
-    const title    = d.data?.title || 'Instagram Post';
+    const title = item.caption?.text?.slice(0, 100) || 'Instagram Post';
+    const username = item.user?.username || 'instagram';
 
     return {
       title,
-      author:    '@instagram',
+      author: `@${username}`,
       thumbnail: thumb,
-      duration:  '00:00',
-      videoUrl:  originalUrl,
-      isHd:      true,
-      images:    images || (isSinglePhoto && mediaUrl ? [mediaUrl] : null),
+      duration: '00:00',
+      videoUrl: originalUrl,
+      isHd: true,
+      images,
       downloads: {
-        nowm:  (!images && !isSinglePhoto) ? mediaUrl : '',
-        wm:    (!images && !isSinglePhoto) ? mediaUrl : '',
-        mp3:   '',
+        nowm: mediaUrl,
+        wm:   mediaUrl,
+        mp3:  '',
         cover: thumb,
       },
     };
