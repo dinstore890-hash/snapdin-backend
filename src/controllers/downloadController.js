@@ -69,4 +69,28 @@ const downloadInstagram = async (req, res, next) => {
   }
 };
 
-module.exports = { download, downloadFile, downloadInstagram };
+// GET /api/proxy-image?url=... — proxy CDN image to bypass CORS
+const proxyImage = async (req, res, next) => {
+  try {
+    const { url } = req.query;
+    if (!url) return errorResponse(res, 'Missing url parameter.', 400);
+
+    const upstream = await axios.get(url, {
+      responseType: 'stream',
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36',
+        'Referer': 'https://www.instagram.com/',
+      },
+    });
+
+    res.setHeader('Content-Type', upstream.headers['content-type'] || 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    upstream.data.pipe(res);
+    upstream.data.on('error', (err) => next(err));
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { download, downloadFile, downloadInstagram, proxyImage };
