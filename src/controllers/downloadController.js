@@ -61,7 +61,9 @@ const downloadFile = async (req, res, next) => {
 const downloadInstagram = async (req, res, next) => {
   try {
     const data = await fetchInstagramData(req.body.url);
-    successResponse(res, { data });
+    const payload = { success: true, data };
+    console.log('Sending payload size:', JSON.stringify(payload).length);
+    res.status(200).json(payload);
   } catch (err) {
     next(err);
   }
