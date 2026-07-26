@@ -8,42 +8,47 @@ class InstagramProvider extends BaseProvider {
       timeout: 15000,
       headers: {
         'Content-Type': 'application/json',
-        'x-rapidapi-host': 'instagram-reels-downloader-api.p.rapidapi.com',
+        'x-rapidapi-host': 'instagram-downloader-download-instagram-videos-stories.p.rapidapi.com',
       },
     });
   }
 
   async getVideo(url) {
     const response = await this.client.get(
-      'https://instagram-reels-downloader-api.p.rapidapi.com/download',
+      'https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/unified/url',
       {
         params: { url },
-        headers: { 'x-rapidapi-key': process.env.RAPIDAPI_KEY },
+        headers: {
+          'x-rapidapi-host': 'instagram-downloader-download-instagram-videos-stories.p.rapidapi.com',
+          'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+        },
       }
     );
 
     const data = response.data;
-    if (!data) throw new Error('Could not fetch Instagram video.');
+    if (!data || !data.success) throw new Error('Could not fetch Instagram video.');
 
     return this._normalise(data, url);
   }
 
   _normalise(d, originalUrl) {
-    // API returns { url: [...] } or { url: 'string' }
-    const urls = Array.isArray(d.url) ? d.url : [d.url];
-    const videoUrl = urls.find(u => u && u.includes('.mp4')) || urls[0] || '';
-    const thumb    = d.thumbnail || d.thumb || '';
+    const items = d.data?.content?.items || [];
+    // Find first video, fallback to first item
+    const videoItem = items.find(i => i.type === 'video') || items[0] || {};
+    const mediaUrl  = videoItem.media_url || '';
+    const thumb     = d.data?.cover_thumbnail || videoItem.thumbnail_url || '';
+    const title     = d.data?.title || 'Instagram Video';
 
     return {
-      title:     d.title || 'Instagram Video',
-      author:    d.author || '@instagram',
+      title,
+      author:    '@instagram',
       thumbnail: thumb,
       duration:  '00:00',
       videoUrl:  originalUrl,
       isHd:      true,
       downloads: {
-        nowm:  videoUrl,
-        wm:    videoUrl,
+        nowm:  mediaUrl,
+        wm:    mediaUrl,
         mp3:   '',
         cover: thumb,
       },
