@@ -25,13 +25,16 @@ const downloadFile = async (req, res, next) => {
     const safeFilename = `${filename.replace(/[^a-z0-9_-]/gi, '_')}.${ext}`;
 
     // Fetch the file from the CDN — stream directly, never buffer fully in memory
+    const isTikTok = url.includes('tiktok') || url.includes('tiktokcdn');
+    const isInstagram = url.includes('cdninstagram') || url.includes('fbcdn');
+
     const upstream = await axios.get(url, {
       responseType: 'stream',
       timeout: 30000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36',
-        'Referer': 'https://www.tiktok.com/',
-        'Accept': 'video/mp4,video/*;q=0.9,*/*;q=0.8',
+        'Referer': isInstagram ? 'https://www.instagram.com/' : 'https://www.tiktok.com/',
+        'Accept': '*/*',
         'Accept-Encoding': 'identity',
         'Range': 'bytes=0-',
       },
