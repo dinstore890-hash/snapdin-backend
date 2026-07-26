@@ -26,6 +26,7 @@ class InstagramProvider extends BaseProvider {
     );
 
     const data = response.data;
+    console.log('Instagram API response:', JSON.stringify(data).slice(0, 500));
     if (!data || !data.success) throw new Error('Could not fetch Instagram video.');
 
     return this._normalise(data, url);
