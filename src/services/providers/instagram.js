@@ -26,8 +26,13 @@ class InstagramProvider extends BaseProvider {
     );
 
     const data = response.data;
-    console.log('Instagram API response:', JSON.stringify(data).slice(0, 1000));
+    console.log('Instagram API response:', JSON.stringify(data).slice(0, 2000));
     if (!data || !data.success) throw new Error('Could not fetch Instagram video.');
+
+    const content = data.data?.content || {};
+    const items = content.items || [];
+    console.log('Instagram items count:', items.length);
+    if (items.length > 0) console.log('Instagram items[0]:', JSON.stringify(items[0]).slice(0, 300));
 
     const result = this._normalise(data, url);
     console.log('Instagram normalised:', JSON.stringify(result).slice(0, 300));
