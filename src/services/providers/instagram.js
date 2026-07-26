@@ -4,12 +4,7 @@ const BaseProvider = require('./provider');
 class InstagramProvider extends BaseProvider {
   constructor() {
     super();
-    this.client = axios.create({
-      timeout: 15000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    this.client = axios.create({ timeout: 15000 });
   }
 
   async getVideo(url) {
@@ -18,17 +13,17 @@ class InstagramProvider extends BaseProvider {
     for (let i = 0; i < maxRetries; i++) {
       try {
         const response = await this.client.get(
-          'https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/unified/url',
+          'https://instagram-reels-downloader-api.p.rapidapi.com/download',
           {
             params: { url },
             headers: {
-              'x-rapidapi-host': 'instagram-downloader-download-instagram-videos-stories.p.rapidapi.com',
+              'x-rapidapi-host': 'instagram-reels-downloader-api.p.rapidapi.com',
               'x-rapidapi-key': process.env.RAPIDAPI_KEY,
             },
           }
         );
         const data = response.data;
-        console.log('Instagram API response:', JSON.stringify(data).slice(0, 1000));
+        console.log('Instagram API response:', JSON.stringify(data).slice(0, 500));
         if (!data || !data.success) throw new Error('Could not fetch Instagram post.');
         const result = this._normalise(data, url);
         console.log('Instagram normalised:', JSON.stringify(result).slice(0, 300));
@@ -37,7 +32,7 @@ class InstagramProvider extends BaseProvider {
         lastError = err;
         if (err.response?.status === 429 && i < maxRetries - 1) {
           const delay = (i + 1) * 3000;
-          console.log(`Instagram rate limited, retrying in ${delay}ms...`);
+          console.log(`Rate limited, retrying in ${delay}ms...`);
           await new Promise(r => setTimeout(r, delay));
         } else {
           throw err;
@@ -48,32 +43,29 @@ class InstagramProvider extends BaseProvider {
   }
 
   _normalise(d, originalUrl) {
-    const content = d.data?.content || {};
-    const items   = content.items || [];
-    const mediaType = d.media_type || '';
-
-    const isCarousel = mediaType === 'sidecar' || items.length > 0;
-    const images = isCarousel && items.length > 0
-      ? items.map(i => i.media_url).filter(Boolean)
-      : null;
-
-    const isSinglePhoto = !isCarousel && (mediaType === 'photo' || (!mediaType && content.media_url && !content.media_url.includes('.mp4')));
-
-    const mediaUrl = content.media_url || '';
-    const thumb    = content.thumbnail_url || images?.[0] || '';
+    const medias   = d.data?.medias || [];
     const title    = d.data?.title || 'Instagram Post';
+    const thumb    = d.data?.thumbnail || medias.find(m => m.type === 'video')?.thumbnail || '';
+    const username = d.data?.owner?.username || 'instagram';
+
+    const videos = medias.filter(m => m.type === 'video');
+    const images = medias.filter(m => m.type === 'image');
+
+    const mediaUrl  = videos[0]?.url || '';
+    const hasImages = images.length > 0 && !mediaUrl;
+    const isCarousel = images.length > 1;
 
     return {
       title,
-      author:    '@instagram',
+      author:    `@${username}`,
       thumbnail: thumb,
       duration:  '00:00',
       videoUrl:  originalUrl,
       isHd:      true,
-      images:    images || (isSinglePhoto && mediaUrl ? [mediaUrl] : null),
+      images:    (hasImages || isCarousel) ? images.map(i => i.url) : null,
       downloads: {
-        nowm:  (!images && !isSinglePhoto) ? mediaUrl : '',
-        wm:    (!images && !isSinglePhoto) ? mediaUrl : '',
+        nowm:  mediaUrl,
+        wm:    mediaUrl,
         mp3:   '',
         cover: thumb,
       },
