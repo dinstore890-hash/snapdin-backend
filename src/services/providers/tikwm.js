@@ -87,15 +87,17 @@ class TikwmProvider extends BaseProvider {
    * @returns {object} Normalised video object.
    */
   _normalise(d) {
+    const images = Array.isArray(d.images) && d.images.length > 0 ? d.images : null;
     return {
       title:     d.title     || 'TikTok Video',
       author:    `@${d.author?.unique_id || d.author?.nickname || 'unknown'}`,
       thumbnail: d.cover     || '',
       duration:  this._formatDuration(d.duration),
       videoUrl:  `https://www.tiktok.com/@${d.author?.unique_id || 'user'}/video/${d.id}`,
+      images:    images,
       downloads: {
-        nowm:  d.hdplay || d.play || '',
-        wm:    d.wmplay || d.play || '',
+        nowm:  images ? '' : (d.hdplay || d.play || ''),
+        wm:    images ? '' : (d.wmplay || d.play || ''),
         mp3:   d.music  || '',
         cover: d.origin_cover || d.cover || '',
       },

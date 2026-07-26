@@ -38,11 +38,13 @@ class InstagramProvider extends BaseProvider {
     const content = d.data?.content || {};
     const items   = content.items || [];
 
-    // Single video: data.content.media_url
-    // Carousel: data.content.items[].media_url
     const mediaUrl = content.media_url || items.find(i => i.type === 'video')?.media_url || items[0]?.media_url || '';
     const thumb    = content.thumbnail_url || d.data?.cover_thumbnail || items[0]?.thumbnail_url || '';
-    const title    = d.data?.title || 'Instagram Video';
+    const title    = d.data?.title || 'Instagram Post';
+
+    // Carousel: collect all image items
+    const imageItems = items.filter(i => i.type === 'image' || (!i.type && i.media_url && !mediaUrl));
+    const images = imageItems.length > 0 ? imageItems.map(i => i.media_url) : null;
 
     return {
       title,
@@ -51,9 +53,10 @@ class InstagramProvider extends BaseProvider {
       duration:  '00:00',
       videoUrl:  originalUrl,
       isHd:      true,
+      images,
       downloads: {
-        nowm:  mediaUrl,
-        wm:    mediaUrl,
+        nowm:  images ? '' : mediaUrl,
+        wm:    images ? '' : mediaUrl,
         mp3:   '',
         cover: thumb,
       },
