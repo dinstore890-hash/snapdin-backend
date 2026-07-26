@@ -93,7 +93,7 @@ class TikwmProvider extends BaseProvider {
     return {
       title:     d.title     || 'TikTok Video',
       author:    `@${d.author?.unique_id || d.author?.nickname || 'unknown'}`,
-      thumbnail: d.cover     || '',
+      thumbnail: images ? (d.origin_cover || d.cover || '') : (d.cover || ''),
       duration:  this._formatDuration(d.duration),
       videoUrl:  `https://www.tiktok.com/@${d.author?.unique_id || 'user'}/video/${d.id}`,
       images:    images,
