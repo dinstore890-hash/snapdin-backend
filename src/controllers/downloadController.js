@@ -78,12 +78,13 @@ const proxyImage = async (req, res, next) => {
     const { url } = req.query;
     if (!url) return errorResponse(res, 'Missing url parameter.', 400);
 
+    const isTikTok = url.includes('tiktok');
     const upstream = await axios.get(url, {
       responseType: 'stream',
       timeout: 15000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36',
-        'Referer': 'https://www.instagram.com/',
+        'Referer': isTikTok ? 'https://www.tiktok.com/' : 'https://www.instagram.com/',
       },
     });
 
