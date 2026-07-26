@@ -33,10 +33,15 @@ class InstagramProvider extends BaseProvider {
 
   _normalise(d, originalUrl) {
     const items = d.data?.content?.items || [];
-    // Find first video, fallback to first item
+    const mediaType = d.media_type || '';
+
+    // Reels/video: data.url langsung berisi video URL
+    const directUrl = d.data?.url || d.url || '';
+
+    // Carousel/sidecar: ambil dari items
     const videoItem = items.find(i => i.type === 'video') || items[0] || {};
-    const mediaUrl  = videoItem.media_url || '';
-    const thumb     = d.data?.cover_thumbnail || videoItem.thumbnail_url || '';
+    const mediaUrl  = directUrl || videoItem.media_url || '';
+    const thumb     = d.data?.cover_thumbnail || d.data?.thumbnail_url || videoItem.thumbnail_url || '';
     const title     = d.data?.title || 'Instagram Video';
 
     return {
