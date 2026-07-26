@@ -33,17 +33,14 @@ class InstagramProvider extends BaseProvider {
   }
 
   _normalise(d, originalUrl) {
-    const items = d.data?.content?.items || [];
-    const mediaType = d.media_type || '';
+    const content = d.data?.content || {};
+    const items   = content.items || [];
 
-    // Reels/video: data.url langsung berisi video URL
-    const directUrl = d.data?.url || d.url || '';
-
-    // Carousel/sidecar: ambil dari items
-    const videoItem = items.find(i => i.type === 'video') || items[0] || {};
-    const mediaUrl  = directUrl || videoItem.media_url || '';
-    const thumb     = d.data?.cover_thumbnail || d.data?.thumbnail_url || videoItem.thumbnail_url || '';
-    const title     = d.data?.title || 'Instagram Video';
+    // Single video: data.content.media_url
+    // Carousel: data.content.items[].media_url
+    const mediaUrl = content.media_url || items.find(i => i.type === 'video')?.media_url || items[0]?.media_url || '';
+    const thumb    = content.thumbnail_url || d.data?.cover_thumbnail || items[0]?.thumbnail_url || '';
+    const title    = d.data?.title || 'Instagram Video';
 
     return {
       title,
