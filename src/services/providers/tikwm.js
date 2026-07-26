@@ -44,6 +44,8 @@ class TikwmProvider extends BaseProvider {
     );
 
     this._validateResponse(response.data);
+    console.log('TikWM images field:', JSON.stringify(response.data.data?.images)?.slice(0, 300));
+    console.log('TikWM image_post_info:', JSON.stringify(response.data.data?.image_post_info)?.slice(0, 300));
 
     return this._normalise(response.data.data);
   }
